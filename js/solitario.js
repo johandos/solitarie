@@ -5,7 +5,7 @@ let palos = ["viu", "cua", "hex", "cir"];
 // Array de número de cartas
 //let numeros = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 // En las pruebas iniciales solo se trabajará con cuatro cartas por palo:
-let numeros = [9, 10, 11, 12];
+let numeros = [9];
 
 // paso (top y left) en pixeles de una carta a la siguiente en un mazo
 let paso = 5;
@@ -47,6 +47,58 @@ let temporizador = null; // manejador del temporizador
 document.getElementById("reset").addEventListener("click", function() {
 	resetGame();
 });
+const divElement = document.getElementById("inicial");
+const ultimoHijo = divElement.lastElementChild;
+
+ultimoHijo.draggable = true;
+
+ultimoHijo.addEventListener("dragstart", dragStart);
+ultimoHijo.addEventListener("dragend", dragEnd);
+
+function dragStart(event) {
+	event.dataTransfer.setData("text/plain", event.target.id);
+	event.currentTarget.style.opacity = "0.5";
+}
+
+function dragEnd(event) {
+	event.currentTarget.style.opacity = "1";
+}
+
+tapeteReceptor1.addEventListener("dragover", dragOver);
+tapeteReceptor1.addEventListener("dragenter", dragEnter);
+tapeteReceptor1.addEventListener("dragleave", dragLeave);
+tapeteReceptor1.addEventListener("drop", drop);
+
+function dragOver(event) {
+	event.preventDefault();
+}
+
+function dragEnter(event) {
+	event.preventDefault();
+	event.currentTarget.style.background = "lightgray";
+}
+
+function dragLeave(event) {
+	event.currentTarget.style.background = "";
+}
+
+function drop(event) {
+	event.preventDefault();
+	event.currentTarget.style.background = "";
+
+	const carta = event.dataTransfer.getData("text/plain");
+	const start = carta.lastIndexOf("/") + 1; // Obtener el índice del último "/"
+	const end = carta.lastIndexOf("."); // Obtener el índice del último "."
+	const element = carta.substring(start, end); // Extraer la subcadena entre los índices
+	const draggedElement = document.getElementById(`carta_${element}`);
+	draggedElement.style = 'width: 60px;';
+
+	const endPalo = carta.lastIndexOf("-"); // Obtener el índice del último "-"
+	const palo = carta.substring(endPalo + 1, carta.lastIndexOf(".")); // Extraer la subcadena entre los índices
+
+	if (palo === 'hex')
+		tapeteReceptor1.appendChild(draggedElement);
+}
 
 // El juego arranca ya al cargar la página: no se espera a reiniciar
 comenzarJuego();
@@ -64,6 +116,7 @@ function comenzarJuego() {
 		for (let j = 0; j < numeros.length; j++) {
 			let carta = document.createElement("img");
 			carta.src = "./imagenes/baraja/" + numeros[j] + '-' + palos[i] + ".png";
+			carta.id = "carta_" + numeros[j] + '-' + palos[i];
 			mazoInicial.push(carta);
 		}
 	}
@@ -81,16 +134,6 @@ function comenzarJuego() {
 	setContador(contReceptor4, 0);
 	setContador(contMovimientos, 0);
 
-
-	// Barajar el mazo inicial
-	barajar(mazoInicial);
-
-	// Cargar las cartas en los tapetes receptores
-	cargarTapeteReceptor(mazoReceptor1, contReceptor1);
-	cargarTapeteReceptor(mazoReceptor2, contReceptor2);
-	cargarTapeteReceptor(mazoReceptor3, contReceptor3);
-	cargarTapeteReceptor(mazoReceptor4, contReceptor4);
-
 	// Actualizar los contadores de cartas
 	setContador(contInicial, mazoInicial.length);
 	setContador(contSobrantes, mazoSobrantes.length);
@@ -98,9 +141,6 @@ function comenzarJuego() {
 	setContador(contReceptor2, mazoReceptor2.length);
 	setContador(contReceptor3, mazoReceptor3.length);
 	setContador(contReceptor4, mazoReceptor4.length);
-
-	// Arrancar el conteo de tiempo
-	arrancarTiempo();
 
 	// Arrancar el conteo de tiempo
 	arrancarTiempo();
@@ -253,12 +293,7 @@ function cargarTapeteReceptor(mazoReceptor, contador) {
 		let carta = mazoInicial.pop();
 		carta.classList.add(palos[i]);
 		mazoReceptor.push(carta);
-		tapeteReceptor.appendChild(carta);
+		tapeteInicial.appendChild(carta);
 		setContador(contador, mazoReceptor.length);
 	}
 }
-
-// Resto del código...
-
-// Llamada a la función para comenzar el juego al cargar la página
-comenzarJuego();
