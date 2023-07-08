@@ -3,9 +3,9 @@
 // Array de palos
 let palos = ["viu", "cua", "hex", "cir"];
 // Array de número de cartas
-//let numeros = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+let numeros = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 // En las pruebas iniciales solo se trabajará con cuatro cartas por palo:
-let numeros = [9];
+//let numeros = [9];
 
 // paso (top y left) en pixeles de una carta a la siguiente en un mazo
 let paso = 5;
@@ -120,54 +120,45 @@ function drop(event) {
 	const end = carta.lastIndexOf("."); // Obtener el índice del último "."
 	const element = carta.substring(start, end); // Extraer la subcadena entre los índices
 
+	const nextChildNumber = element.split('-')[0]; // Extraer la subcadena entre los índices
+
 	const endPalo = carta.lastIndexOf("-"); // Obtener el índice del último "-"
+
 	const paloDrag = carta.substring(endPalo + 1, carta.lastIndexOf(".")); // Extraer la subcadena entre los índices
 
 	setContador(contMovimientos, parseInt(contMovimientos.textContent)+1);
 
-	if (paloDrag === 'viu' && event.target.id === 'receptorViu') {
-		const draggedElement = document.getElementById(`carta_${element}`);
-		draggedElement.style = 'width: 60px;';
-		tapeteReceptorViu.appendChild(draggedElement);
+	const viu = {
+		"tapete": tapeteReceptorViu,
+		"cont": contReceptorViu,
+	};
 
-		const cont = Array.from(tapeteReceptorViu.children).filter((child) => child.tagName === 'IMG').length;
-		setContador(contReceptorViu, cont);
-	}
+	const cir = {
+		"tapete": tapeteReceptorCir,
+		"cont": contReceptorCir,
+	};
 
-	if (paloDrag === 'cir' && event.target.id === 'receptorCir') {
-		const draggedElement = document.getElementById(`carta_${element}`);
-		draggedElement.style = 'width: 60px;';
-		tapeteReceptorCir.appendChild(draggedElement);
+	const hex = {
+		"tapete": tapeteReceptorHex,
+		"cont": contReceptorHex,
+	};
 
-		const cont = Array.from(tapeteReceptorCir.children).filter((child) => child.tagName === 'IMG').length;
-		setContador(contReceptorCir, cont);
-	}
-	
-	if (paloDrag === 'hex' && event.target.id === 'receptorHex') {
-		const draggedElement = document.getElementById(`carta_${element}`);
-		draggedElement.style = 'width: 60px;';
-		tapeteReceptorHex.appendChild(draggedElement);
+	const cua = {
+		"tapete": tapeteReceptorCua,
+		"cont": contReceptorCua,
+	};
 
-		const cont = Array.from(tapeteReceptorHex.children).filter((child) => child.tagName === 'IMG').length;
-		setContador(contReceptorHex, cont);
-	}
+	const receptorTapete = [ viu, cir, hex, cua];
 
-	if (paloDrag === 'cua' && event.target.id === 'receptorCua') {
-		const draggedElement = document.getElementById(`carta_${element}`);
-		draggedElement.style = 'width: 60px;';
-		tapeteReceptorCua.appendChild(draggedElement);
+	receptorTapete.find((receptor) => {
+		if (event.target.id === receptor.tapete.id){
+			dragReceptorTapete(event, receptor.tapete, receptor.cont, parseInt(nextChildNumber), element, paloDrag)
+		}
+	});
 
-		const cont = Array.from(tapeteReceptorCua.children).filter((child) => child.tagName === 'IMG').length;
-		setContador(contReceptorCua, cont);
-	}
 
 	if (event.target.id === 'sobrantes'){
-		const draggedElement = document.getElementById(`carta_${element}`);
-		draggedElement.style = 'width: 60px;';
-		tapeteSobrantes.appendChild(draggedElement);
-
-		const cont = Array.from(tapeteSobrantes.children).filter((child) => child.tagName === 'IMG').length;
-		setContador(contSobrantes, cont);
+		dragCartaInTapete(element, tapeteSobrantes, contSobrantes);
 	}
 
 
@@ -176,6 +167,56 @@ function drop(event) {
 
 	const contS = Array.from(tapeteSobrantes.children).filter((child) => child.tagName === 'IMG').length;
 	setContador(contSobrantes, contS);
+}
+
+function capitalize(str) {
+	return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+function validateLastChild(lastChildNumber, nextChildNumber){
+	return (lastChildNumber - 1) === nextChildNumber;
+}
+
+function dragReceptorTapete(event, tapeteReceptor, contReceptor, nextChildNumber, element, paloDrag) {
+
+	const contPrevious = Array.from(tapeteReceptor.children).filter((child) => child.tagName === 'IMG').length;
+	let lasChildNumber = 0;
+	if (contPrevious > 0){
+		lasChildNumber = parseInt(tapeteReceptor.lastChild.id.split('_')[1].split('-')[0]);
+	}
+	const tapetePalo = tapeteReceptor.id.substring(tapeteReceptor.id.length - 3).toLowerCase();
+	if (getOtherPalo(tapetePalo).includes(paloDrag) && validateLastChild(lasChildNumber, nextChildNumber) ) {
+		dragCartaInTapete(element, tapeteReceptor, contReceptor);
+	}else{
+		if (contPrevious === 0 && nextChildNumber === 12 && tapeteReceptor.id.includes(capitalize(paloDrag))){
+			dragCartaInTapete(element, tapeteReceptor, contReceptor);
+		}
+	}
+}
+
+function getOtherPalo(paloDrag) {
+	const paloColorNaranja = ['viu', 'cua'];
+	const paloColorGris = ['hex', 'cir'];
+	let palo = [];
+	if(paloColorNaranja.includes(paloDrag)){
+		palo = paloColorGris;
+	}
+
+	if(paloColorGris.includes(paloDrag)){
+		palo = paloColorNaranja;
+	}
+
+	return palo;
+}
+
+function dragCartaInTapete(element, tapeteReceptor, contReceptor){
+	const draggedElement = document.getElementById(`carta_${element}`);
+	draggedElement.className = 'carta-tapete';
+	draggedElement.style = '';
+	tapeteReceptor.appendChild(draggedElement);
+
+	const cont = Array.from(tapeteReceptor.children).filter((child) => child.tagName === 'IMG').length;
+	setContador(contReceptor, cont);
 }
 
 // El juego arranca ya al cargar la página: no se espera a reiniciar

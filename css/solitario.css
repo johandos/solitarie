@@ -83,3 +83,10 @@ div.tapete#sobrantes{
 div.tapete.receptor{
 	background-color: lightgreen;
 }
+
+.carta-tapete{
+	width: 60px;
+	top: 25%;
+	left: 20%;
+	position: absolute;
+}
