@@ -4,9 +4,6 @@
 let palos = ["viu", "cua", "hex", "cir"];
 // Array de número de cartas
 let numeros = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
-// En las pruebas iniciales solo se trabajará con cuatro cartas por palo:
-//let numeros = [9];
-
 // paso (top y left) en pixeles de una carta a la siguiente en un mazo
 let paso = 5;
 
@@ -40,12 +37,43 @@ let contTiempo  = document.getElementById("contador_tiempo"); // span cuenta tie
 let segundos 	 = 0;    // cuenta de segundos
 let temporizador = null; // manejador del temporizador
 
+
+const viu = {
+	"tapete": tapeteReceptorViu,
+	"cont": contReceptorViu,
+};
+
+const cir = {
+	"tapete": tapeteReceptorCir,
+	"cont": contReceptorCir,
+};
+
+const hex = {
+	"tapete": tapeteReceptorHex,
+	"cont": contReceptorHex,
+};
+
+const cua = {
+	"tapete": tapeteReceptorCua,
+	"cont": contReceptorCua,
+};
+
+const receptorTapete = [ viu, cir, hex, cua];
+
 /***** FIN DECLARACIÓN DE VARIABLES GLOBALES *****/
 
 
 // Rutina asociada a boton reset
 document.getElementById("reset").addEventListener("click", function() {
 	window.location.reload();
+});
+
+document.getElementById("sobrantes").addEventListener("click", function() {
+	const elementosArray = Array.from(tapeteSobrantes.children);
+	const ultimoElemento = elementosArray.pop();
+	elementosArray.unshift(ultimoElemento);
+
+	elementosArray.forEach((element) => tapeteSobrantes.appendChild(element));
 });
 const divElement = document.getElementById("inicial");
 const ultimoHijo = divElement.lastElementChild;
@@ -119,37 +147,12 @@ function drop(event) {
 	const start = carta.lastIndexOf("/") + 1; // Obtener el índice del último "/"
 	const end = carta.lastIndexOf("."); // Obtener el índice del último "."
 	const element = carta.substring(start, end); // Extraer la subcadena entre los índices
-
 	const nextChildNumber = element.split('-')[0]; // Extraer la subcadena entre los índices
-
 	const endPalo = carta.lastIndexOf("-"); // Obtener el índice del último "-"
-
 	const paloDrag = carta.substring(endPalo + 1, carta.lastIndexOf(".")); // Extraer la subcadena entre los índices
-
 	setContador(contMovimientos, parseInt(contMovimientos.textContent)+1);
 
-	const viu = {
-		"tapete": tapeteReceptorViu,
-		"cont": contReceptorViu,
-	};
-
-	const cir = {
-		"tapete": tapeteReceptorCir,
-		"cont": contReceptorCir,
-	};
-
-	const hex = {
-		"tapete": tapeteReceptorHex,
-		"cont": contReceptorHex,
-	};
-
-	const cua = {
-		"tapete": tapeteReceptorCua,
-		"cont": contReceptorCua,
-	};
-
-	const receptorTapete = [ viu, cir, hex, cua];
-
+	/** Pasar la carta seleccionada a el tapete que corresponde **/
 	receptorTapete.find((receptor) => {
 		if (event.target.id === receptor.tapete.id){
 			dragReceptorTapete(event, receptor.tapete, receptor.cont, parseInt(nextChildNumber), element, paloDrag)
@@ -157,6 +160,7 @@ function drop(event) {
 	});
 
 
+	/** Pasar la carta seleccionada del tapete sobrante **/
 	if (event.target.id === 'sobrantes'){
 		dragCartaInTapete(element, tapeteSobrantes, contSobrantes);
 	}
@@ -165,6 +169,7 @@ function drop(event) {
 	const cont = Array.from(tapeteInicial.children).filter((child) => child.tagName === 'IMG').length;
 	setContador(contInicial, cont);
 
+	// contamos las cartas del tapete sobrantes luego de un movimiento
 	const contS = Array.from(tapeteSobrantes.children).filter((child) => child.tagName === 'IMG').length;
 	setContador(contSobrantes, contS);
 }
@@ -181,10 +186,12 @@ function dragReceptorTapete(event, tapeteReceptor, contReceptor, nextChildNumber
 
 	const contPrevious = Array.from(tapeteReceptor.children).filter((child) => child.tagName === 'IMG').length;
 	let lasChildNumber = 0;
+	let tapeteColor = tapeteReceptor.id
 	if (contPrevious > 0){
-		lasChildNumber = parseInt(tapeteReceptor.lastChild.id.split('_')[1].split('-')[0]);
+		tapeteColor = tapeteReceptor.lastChild.id
+		lasChildNumber = parseInt(tapeteColor.split('_')[1].split('-')[0]);
 	}
-	const tapetePalo = tapeteReceptor.id.substring(tapeteReceptor.id.length - 3).toLowerCase();
+	const tapetePalo = tapeteColor.substring(tapeteColor.length - 3).toLowerCase();
 	if (getOtherPalo(tapetePalo).includes(paloDrag) && validateLastChild(lasChildNumber, nextChildNumber) ) {
 		dragCartaInTapete(element, tapeteReceptor, contReceptor);
 	}else{
@@ -340,47 +347,9 @@ function cargarTapeteInicial(mazo) {
 }
 
 /**
- Esta función debe incrementar el número correspondiente al contenido textual
- del elemento que actúa de contador
- */
-function incContador(contador) {
-	contador.textContent = parseInt(contador.textContent) + 1;
-}
-
-/**
- Idem que anterior, pero decrementando
- */
-function decContador(contador) {
-	contador.textContent = parseInt(contador.textContent) - 1;
-}
-
-/**
  Similar a las anteriores, pero ajustando la cuenta al
  valor especificado
  */
 function setContador(contador, valor) {
 	contador.textContent = valor;
-}
-
-// Obtener todas las cartas del mazo inicial
-let cartasMazoInicial = document.getElementsByClassName("carta-inicial");
-for (let carta of cartasMazoInicial) {
-	mazoInicial.push(carta);
-}
-
-// Obtener todas las cartas del mazo de sobrantes
-let cartasMazoSobrantes = document.getElementsByClassName("carta-sobrantes");
-for (let carta of cartasMazoSobrantes) {
-	mazoSobrantes.push(carta);
-}
-
-// Función para cargar las cartas en un tapete receptor
-function cargarTapeteReceptor(mazoReceptor, contador) {
-	for (let i = 0; i < palos.length; i++) {
-		let carta = mazoInicial.pop();
-		carta.classList.add(palos[i]);
-		mazoReceptor.push(carta);
-		tapeteInicial.appendChild(carta);
-		setContador(contador, mazoReceptor.length);
-	}
 }
